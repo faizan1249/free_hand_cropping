@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:free_hand_cropping/custom_clipper.dart';
+import 'package:free_hand_cropping/custom_painter.dart';
 import 'dart:ui' as ui;
 
 import 'package:screenshot/screenshot.dart';
@@ -39,16 +43,126 @@ class _MyHomePageState extends State<MyHomePage> {
     image = await loadImage(File(widget.imageFile.path).readAsBytesSync());
   }
 
-  Widget _buildImage() {}
+  Widget _buildImage() {
+    if (isImageLoaded) {
+      return Center(
+        child: RotatedBox(
+          quarterTurns: rotation,
+          child: FittedBox(
+            child: SizedBox(
+                height: image.height.toDouble(),
+                width: image.width.toDouble(),
+                child: croppedImage
+                    ? Screenshot(
+                        controller: _screenshotController,
+                        child: ClipPath(
+                          clipper: MyClipper(pointsList: pointsList),
+                          child: Image.file(widget.imageFile),
+                        ))
+                    : CustomPaint(
+                        painter: MyImagePainter(
+                            image: image,
+                            context: context,
+                            height: 400,
+                            // height: MediaQuery.of(context).size.width.toInt(),
+                            crop: croppedImage,
+                            pointList: pointsList),
+                        child: GestureDetector(
+                          onPanUpdate: (details) {
+                            Offset click = Offset(details.localPosition.dx,
+                                details.localPosition.dy);
+                            setState(() {
+                              if (click.dx > 0 &&
+                                  click.dy < image.width &&
+                                  click.dy > 0 &&
+                                  click.dy < image.height) {
+
+
+                                    
+                                pointsList.add(click);
+                              }
+                            });
+                            setState(() {});
+                          },
+                        ),
+                      )),
+          ),
+        ),
+      );
+    }
+    return const Center(
+      child: Text("Loading...."),
+    );
+  }
+
+  List<Widget> _iconDecider() {
+    if (isImageLoaded && !croppedImage) {
+      return [
+        IconButton(
+            onPressed: () {
+              setState(() {
+                croppedImage = true;
+              });
+              _screenshotController
+                  .capture()
+                  .then((Uint8List? imageList) async {
+                print("INSIDE CAPTURE SCREENSHOT");
+                if (imageList != null) {
+                  String path = await FileSaver.instance
+                      .saveAs('result image', imageList, 'png', MimeType.PNG);
+                  log(path);
+                }
+              });
+            },
+            icon: const Icon(Icons.edit)),
+      ];
+    }
+    return [];
+  }
+
+  Widget rotate() {
+    return BottomAppBar(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          IconButton(
+              onPressed: () async {
+                setState(() {
+                  rotation--;
+                });
+              },
+              icon: const Icon(Icons.rotate_left)),
+          IconButton(
+              onPressed: () async {
+                setState(() {
+                  rotation++;
+                });
+              },
+              icon: const Icon(Icons.rotate_right)),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     // TODO: implement initState
-    initFunc();
+
     super.initState();
+    initFunc();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    var appBar2 = AppBar(
+      title: const Text("Doc Scanner"),
+      actions: _iconDecider(),
+    );
+    return Scaffold(
+      // key: GlobalKey(),
+      appBar: appBar2,
+      body: _buildImage(),
+      bottomNavigationBar: rotate(),
+    );
   }
 }

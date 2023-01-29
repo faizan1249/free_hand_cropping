@@ -56,6 +56,8 @@ class _ImageSelectorState extends State<ImageSelector> {
             content: SingleChildScrollView(
               child: ListBody(
                 children: [
+                
+
                   GestureDetector(
                     child: const Text("Gallery"),
                     onTap: () {
@@ -67,9 +69,7 @@ class _ImageSelectorState extends State<ImageSelector> {
                       });
                     },
                   ),
-                  const SizedBox(
-                    height: 20
-                  ),
+                  const SizedBox(height: 20),
                   GestureDetector(
                     child: const Text("Camera"),
                     onTap: () {
@@ -87,15 +87,19 @@ class _ImageSelectorState extends State<ImageSelector> {
           );
         });
   }
-  Widget _imageDecider(){
-    if(isFirst || imageFile == null) return Container();
+
+  Widget _imageDecider() {
+    if (isFirst || imageFile == null) return Container();
     return _images();
   }
-  _images(){
-    if(!isImageResized || imageFile ==null){
-      return const Center(child: Text("Loading...."),);
+
+  _images() {
+    if (!isImageResized || imageFile == null) {
+      return const Center(
+        child: Text("Loading...."),
+      );
     }
-    if(croppedImage == null) return Image.file(File(imageFile!.path));
+    if (croppedImage == null) return Image.file(File(imageFile!.path));
     return Image.memory(croppedImage!);
   }
 
@@ -105,9 +109,11 @@ class _ImageSelectorState extends State<ImageSelector> {
       appBar: AppBar(
         title: Text("Parent Fragment"),
         actions: [
-          IconButton(onPressed: (){
-            _alertChoiceDialog(context);
-          }, icon: const Icon(Icons.edit)),
+          IconButton(
+              onPressed: () {
+                _alertChoiceDialog(context);
+              },
+              icon: const Icon(Icons.edit)),
         ],
       ),
       body: Center(
@@ -115,23 +121,28 @@ class _ImageSelectorState extends State<ImageSelector> {
           child: Column(
             children: [
               Container(
-                height: MediaQuery.of(context).size.height-200,
+                height: MediaQuery.of(context).size.height - 200,
                 child: _imageDecider(),
-
               ),
-              ElevatedButton(onPressed: ()async{
-                if(imageFile!=null){
-                  final result = await Navigator.push(context, MaterialPageRoute(
-                    builder: (context){
-                    return MyHomePage(
-                      imageFile: File(imageFile!.path),
-                    );
-                  }));
-                  setState(() {
-                    croppedImage = result;
-                  });
-                }
-              }, child: const Text("Click to Edit"))
+              ElevatedButton(
+                  onPressed: () async {
+                    print("IMAGE FILE:: $imageFile");
+
+                    if (imageFile != null) {
+                      final result = await Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return MyHomePage(
+                          imageFile: File(imageFile!.path),
+                        );
+                      }));
+
+                      setState(() {
+                        print("RESULT:: $result");
+                        croppedImage = result;
+                      });
+                    }
+                  },
+                  child: const Text("Click to Edit"))
             ],
           ),
         ),
